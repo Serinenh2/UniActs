@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'users',
     'events',
     'clubs',
-    'notifications',
     'registrations',
     'rooms',
     'announcements',
