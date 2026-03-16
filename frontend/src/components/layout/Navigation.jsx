@@ -25,11 +25,23 @@ export function Navigation() {
     { name: 'Dashboard', path: '/dashboard' },
   ];
 
+  // Purple/Lavender palette from HomePage
+  const navStyle = {
+    backgroundColor: 'rgba(240,238,250,0.85)',
+    backdropFilter: 'blur(20px)',
+    borderBottom: '1px solid rgba(124,58,237,0.08)',
+  };
+
+  const textColor = '#1a0a3c';
+  const textMuted = '#6b7280';
+  const accent = '#7c3aed';
+
   return (
-    <nav className="border-b bg-background sticky top-0 z-50">
+    <nav className="border-b sticky top-0 z-50" style={navStyle}>
       <div className="container mx-auto px-4 h-16 flex justify-between items-center">
         {/* Logo */}
-        <Link to="/" className="font-bold text-2xl text-primary flex items-center gap-2">
+        <Link to="/" className="font-bold text-2xl flex items-center gap-2" style={{ color: textColor, fontFamily: "'Bricolage Grotesque', sans-serif" }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: accent, display: 'inline-block' }}></span>
           UniActs
         </Link>
 
@@ -40,10 +52,13 @@ export function Navigation() {
               key={item.name}
               to={item.path}
               className={({ isActive }) =>
-                `text-sm font-medium transition-colors hover:text-primary ${
+                `text-sm font-medium transition-colors hover:opacity-80 ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`
               }
+              style={({ isActive }) => ({
+                color: isActive ? textColor : textMuted,
+              })}
             >
               {item.name}
             </NavLink>
@@ -91,12 +106,13 @@ export function Navigation() {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden border-t p-4 space-y-4 bg-background">
+        <div className="md:hidden border-t p-4 space-y-4" style={{ backgroundColor: 'rgba(240,238,250,0.98)', borderColor: 'rgba(124,58,237,0.08)' }}>
           {navItems.map((item) => (
             <Link
               key={item.name}
               to={item.path}
-              className="block text-sm font-medium text-foreground hover:text-primary"
+              className="block text-sm font-medium hover:opacity-80"
+              style={{ color: textMuted }}
               onClick={() => setIsOpen(false)}
             >
               {item.name}

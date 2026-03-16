@@ -31,9 +31,7 @@ export function EventsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Browse Events</h1>
           <p className="text-muted-foreground mt-1">Discover what's happening around campus.</p>
         </div>
-        <Button asChild>
-          <Link to="/create-event">Create Event</Link>
-        </Button>
+        
       </div>
 
       {/* Search and Filter Bar */}

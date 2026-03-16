@@ -1,471 +1,183 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Calendar, Users, ArrowRight, Star, Zap, ChevronRight } from 'lucide-react';
+import { Calendar, Users, ArrowRight, Star, Zap, ChevronRight, Play, TrendingUp, Clock } from 'lucide-react';
 import { getEvents } from '@/data/mockEvents';
+import { HomeNavigation } from '@/components/HomeNavigation';
 
-/* ─────────────────────────────────────────
-   Design Direction: "Dark Editorial Luxury"
-   Palette: Near-black + warm white + electric
-   amber accent. Inspired by high-end tech
-   publications and modern SaaS landing pages.
-   Font pairing: Playfair Display (display) +
-   DM Sans (body). Lots of asymmetry, bold
-   type scale, subtle grain overlay.
-───────────────────────────────────────── */
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .hp-root {
-    --bg-dark: #0a0a0b;
-    --bg-card: #111113;
-    --bg-card-hover: #18181b;
-    --accent: #f59e0b;
-    --accent-light: #fcd34d;
-    --accent-dim: rgba(245,158,11,0.12);
-    --text-primary: #fafaf9;
-    --text-muted: #a1a1aa;
-    --text-dim: #52525b;
-    --border: rgba(255,255,255,0.07);
-    --border-hover: rgba(245,158,11,0.3);
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg-dark);
-    color: var(--text-primary);
-    overflow-x: hidden;
-  }
+.hp {
+  --bg: #f0eefa;
+  --purple: #7c3aed;
+  --purple-light: #a78bfa;
+  --purple-mid: #6d28d9;
+  --accent-soft: rgba(124,58,237,0.1);
+  --white: #ffffff;
+  --text: #1a0a3c;
+  --muted: #6b7280;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
 
-  /* Grain texture overlay */
-  .hp-root::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1000;
-    opacity: 0.35;
-  }
+.hp::before {
+  content: '';
+  position: fixed;
+  top: -200px; right: -200px;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(167,139,250,0.22) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
 
-  /* ── HERO ── */
-  .hp-hero {
-    min-height: 100vh;
-    display: grid;
-    grid-template-rows: 1fr auto;
-    position: relative;
-    padding: 0 clamp(1.5rem, 6vw, 6rem);
-    overflow: hidden;
-  }
+/* NAV */
+.hp-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 48px;
+  background: rgba(240,238,250,0.85); backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(124,58,237,0.08);
+}
+.hp-logo { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:19px; color:var(--text); text-decoration:none; display:flex; align-items:center; gap:7px; }
+.hp-logo-dot { width:8px; height:8px; border-radius:50%; background:var(--purple); }
+.hp-nav-links { display:flex; gap:28px; list-style:none; }
+.hp-nav-links a { color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; transition:color 0.2s; }
+.hp-nav-links a:hover { color:var(--text); }
+.hp-try-btn { background:var(--purple); color:#fff; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; padding:10px 22px; border-radius:50px; text-decoration:none; border:none; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 20px rgba(124,58,237,0.3); }
+.hp-try-btn:hover { background:var(--purple-mid); transform:translateY(-1px); }
 
-  .hp-hero-bg {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 70% 40%, rgba(245,158,11,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 50% at 20% 80%, rgba(245,158,11,0.04) 0%, transparent 50%),
-      var(--bg-dark);
-  }
+/* HERO */
+.hp-hero { min-height:100vh; display:flex; align-items:center; padding:100px 48px 60px; position:relative; overflow:hidden; gap:40px; }
+.hp-hero-left { flex:1; position:relative; z-index:2; max-width:560px; }
+.hp-hero-right { flex:1; position:relative; z-index:2; display:flex; justify-content:center; align-items:center; }
 
-  .hp-hero-grid {
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(var(--border) 1px, transparent 1px),
-                      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 80px 80px;
-    mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 0%, transparent 70%);
-  }
+.hp-bg-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-54%); font-family:'Bricolage Grotesque',sans-serif; font-size:clamp(80px,14vw,160px); font-weight:800; color:rgba(124,58,237,0.055); white-space:nowrap; pointer-events:none; user-select:none; letter-spacing:-0.02em; z-index:0; }
 
-  .hp-hero-content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding-top: 120px;
-    padding-bottom: 80px;
-    max-width: 900px;
-  }
+.hp-eyebrow { display:inline-flex; align-items:center; gap:8px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.15); border-radius:50px; padding:6px 14px; font-size:12px; font-weight:500; color:var(--purple); margin-bottom:24px; animation:fadeUp 0.5s ease both; }
 
-  .hp-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--accent-dim);
-    border: 1px solid rgba(245,158,11,0.2);
-    border-radius: 100px;
-    padding: 6px 16px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent-light);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 2rem;
-    width: fit-content;
-    animation: fadeUp 0.6s ease both;
-  }
+.hp-hero-title { font-family:'Bricolage Grotesque',sans-serif; font-size:clamp(2.4rem,5vw,4rem); font-weight:800; line-height:1.1; letter-spacing:-0.03em; margin-bottom:20px; color:var(--text); animation:fadeUp 0.5s 0.1s ease both; }
+.hp-hero-title .pill-word { display:inline-flex; align-items:center; gap:8px; background:var(--purple); color:#fff; border-radius:50px; padding:2px 18px 2px 6px; font-size:0.9em; vertical-align:middle; }
+.hp-hero-title .pill-icon { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.22); display:inline-flex; align-items:center; justify-content:center; font-size:14px; }
 
-  .hp-hero h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(3rem, 8vw, 7rem);
-    font-weight: 900;
-    line-height: 1.0;
-    letter-spacing: -0.02em;
-    margin: 0 0 1.5rem;
-    animation: fadeUp 0.6s 0.1s ease both;
-  }
+.hp-hero-sub { font-size:15px; font-weight:300; color:var(--muted); line-height:1.7; max-width:420px; margin-bottom:36px; animation:fadeUp 0.5s 0.2s ease both; }
+.hp-hero-btns { display:flex; gap:12px; flex-wrap:wrap; animation:fadeUp 0.5s 0.3s ease both; }
 
-  .hp-hero h1 em {
-    font-style: italic;
-    color: var(--accent);
-  }
+.hp-btn-purple { display:inline-flex; align-items:center; gap:8px; background:var(--purple); color:#fff; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; padding:14px 28px; border-radius:50px; text-decoration:none; border:none; cursor:pointer; box-shadow:0 8px 28px rgba(124,58,237,0.35); transition:all 0.2s; }
+.hp-btn-purple:hover { background:var(--purple-mid); transform:translateY(-2px); }
+.hp-btn-ghost { display:inline-flex; align-items:center; gap:8px; background:var(--white); color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; padding:14px 28px; border-radius:50px; text-decoration:none; border:1px solid rgba(124,58,237,0.15); cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,0.06); transition:all 0.2s; }
+.hp-btn-ghost:hover { border-color:var(--purple); color:var(--purple); }
 
-  .hp-hero-sub {
-    font-size: clamp(1rem, 2vw, 1.2rem);
-    color: var(--text-muted);
-    font-weight: 300;
-    max-width: 520px;
-    line-height: 1.7;
-    margin-bottom: 2.5rem;
-    animation: fadeUp 0.6s 0.2s ease both;
-  }
+/* HERO IMAGE */
+.hp-hero-img-wrap { position:relative; width:460px; height:500px; }
+.hp-hero-img-placeholder { width:100%; height:100%; border-radius:28px; background:linear-gradient(135deg,#c4b5fd 0%,#7c3aed 50%,#4c1d95 100%); display:flex; align-items:center; justify-content:center; font-size:90px; box-shadow:0 30px 80px rgba(124,58,237,0.3); }
 
-  .hp-hero-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    animation: fadeUp 0.6s 0.3s ease both;
-  }
+.hp-badge-float { position:absolute; background:var(--white); border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.12); display:flex; align-items:center; gap:10px; padding:12px 16px; }
+.hp-badge-float-1 { top:24px; right:-24px; animation:float 3s ease-in-out infinite; }
+.hp-badge-float-2 { bottom:90px; right:-32px; animation:float 5s 1s ease-in-out infinite; }
+.hp-badge-float-3 { bottom:24px; left:-24px; animation:float 4s 0.5s ease-in-out infinite; }
+.hp-badge-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.hp-badge-icon.purple { background:rgba(124,58,237,0.1); color:var(--purple); }
+.hp-badge-icon.green  { background:rgba(16,185,129,0.1); color:#10b981; }
+.hp-badge-icon.blue   { background:rgba(59,130,246,0.1); color:#3b82f6; }
+.hp-badge-label { font-size:11px; color:var(--muted); }
+.hp-badge-value { font-size:14px; font-weight:700; color:var(--text); }
 
-  .hp-btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--accent);
-    color: #0a0a0b;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    padding: 14px 28px;
-    border-radius: 8px;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.15s;
-  }
-  .hp-btn-primary:hover { background: var(--accent-light); transform: translateY(-1px); }
+/* STATS */
+.hp-stats { padding:60px 48px; position:relative; z-index:2; }
+.hp-stats-inner { max-width:1000px; margin:0 auto; background:var(--white); border-radius:24px; padding:40px 48px; display:grid; grid-template-columns:1fr 1px 1fr 1px 1fr 1.2fr; align-items:center; box-shadow:0 8px 40px rgba(124,58,237,0.08); }
+.hp-stat-divider { height:60px; background:rgba(124,58,237,0.1); }
+.hp-stat-item { padding:0 28px; text-align:center; }
+.hp-stat-pct { font-family:'Bricolage Grotesque',sans-serif; font-size:3rem; font-weight:800; color:var(--purple); line-height:1; margin-bottom:6px; }
+.hp-stat-desc { font-size:13px; color:var(--muted); line-height:1.4; }
+.hp-stat-cta { padding:0 0 0 28px; display:flex; flex-direction:column; gap:14px; }
+.hp-stat-cta-title { font-family:'Bricolage Grotesque',sans-serif; font-size:17px; font-weight:700; color:var(--text); line-height:1.35; }
 
-  .hp-btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: transparent;
-    color: var(--text-primary);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    padding: 14px 28px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    text-decoration: none;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .hp-btn-ghost:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+/* FEATURES */
+.hp-features { padding:clamp(4rem,8vw,7rem) 48px; position:relative; z-index:2; }
+.hp-features-header { text-align:center; margin-bottom:4rem; }
+.hp-label { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--purple); margin-bottom:12px; }
+.hp-section-title { font-family:'Bricolage Grotesque',sans-serif; font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:800; letter-spacing:-0.02em; line-height:1.15; color:var(--text); margin-bottom:14px; }
+.hp-section-sub { font-size:15px; color:var(--muted); font-weight:300; line-height:1.65; max-width:460px; margin:0 auto; }
+.hp-features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; max-width:1100px; margin:0 auto; }
+.hp-feat-card { background:var(--white); border:1px solid rgba(124,58,237,0.08); border-radius:20px; padding:28px 24px; transition:all 0.25s; }
+.hp-feat-card:hover { transform:translateY(-5px); box-shadow:0 20px 50px rgba(124,58,237,0.12); border-color:rgba(124,58,237,0.2); }
+.hp-feat-icon { width:48px; height:48px; border-radius:14px; background:rgba(124,58,237,0.08); display:flex; align-items:center; justify-content:center; color:var(--purple); margin-bottom:18px; }
+.hp-feat-title { font-family:'Bricolage Grotesque',sans-serif; font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px; }
+.hp-feat-desc { font-size:13px; line-height:1.6; color:var(--muted); font-weight:300; }
 
-  .hp-hero-stats {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    gap: 2.5rem;
-    padding-bottom: 3rem;
-    border-top: 1px solid var(--border);
-    padding-top: 2rem;
-    animation: fadeUp 0.6s 0.4s ease both;
-  }
+/* EVENTS */
+.hp-events { padding:clamp(4rem,8vw,7rem) 48px; background:linear-gradient(180deg,transparent 0%,rgba(124,58,237,0.04) 100%); position:relative; z-index:2; }
+.hp-events-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:2.5rem; max-width:1100px; margin-left:auto; margin-right:auto; flex-wrap:wrap; gap:1rem; }
+.hp-view-all { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--purple); text-decoration:none; border:1px solid rgba(124,58,237,0.2); padding:8px 18px; border-radius:50px; transition:all 0.2s; background:var(--white); }
+.hp-view-all:hover { background:var(--purple); color:#fff; border-color:var(--purple); }
+.hp-events-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; max-width:1100px; margin:0 auto; }
+.hp-event-card { background:var(--white); border:1px solid rgba(124,58,237,0.07); border-radius:20px; overflow:hidden; text-decoration:none; display:block; transition:all 0.25s; }
+.hp-event-card:hover { transform:translateY(-5px); box-shadow:0 20px 50px rgba(124,58,237,0.12); }
+.hp-event-img-wrap { position:relative; height:190px; overflow:hidden; }
+.hp-event-img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.35s; }
+.hp-event-card:hover .hp-event-img { transform:scale(1.05); }
+.hp-event-price { position:absolute; top:12px; right:12px; background:var(--white); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--purple); box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+.hp-event-body { padding:1.2rem 1.4rem; }
+.hp-event-cat { font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--purple); margin-bottom:6px; }
+.hp-event-title { font-family:'Bricolage Grotesque',sans-serif; font-size:16px; font-weight:700; color:var(--text); margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color 0.2s; }
+.hp-event-card:hover .hp-event-title { color:var(--purple); }
+.hp-event-desc { font-size:12px; color:var(--muted); line-height:1.55; margin-bottom:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-weight:300; }
+.hp-event-meta { display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(124,58,237,0.07); font-size:11px; color:var(--muted); }
+.hp-event-date { display:flex; align-items:center; gap:4px; }
 
-  .hp-stat-value {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-  }
+/* DOWNLOAD */
+.hp-download { max-width:1100px; margin:60px auto 0; background:var(--white); border-radius:24px; padding:36px 48px; display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap; box-shadow:0 8px 40px rgba(124,58,237,0.08); }
+.hp-download-title { font-family:'Bricolage Grotesque',sans-serif; font-size:1.6rem; font-weight:800; color:var(--text); letter-spacing:-0.02em; margin-bottom:8px; }
+.hp-download-sub { font-size:14px; color:var(--muted); font-weight:300; }
+.hp-store-btns { display:flex; gap:10px; flex-wrap:wrap; }
+.hp-store-btn { display:inline-flex; align-items:center; gap:10px; background:var(--text); color:#fff; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:10px 20px; border-radius:12px; text-decoration:none; transition:all 0.2s; }
+.hp-store-btn:hover { background:var(--purple); transform:translateY(-2px); }
+.hp-store-btn span { font-size:11px; opacity:0.7; display:block; }
 
-  .hp-stat-label {
-    font-size: 12px;
-    color: var(--text-dim);
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
+/* CTA */
+.hp-cta { padding:clamp(5rem,10vw,8rem) 48px; text-align:center; position:relative; z-index:2; }
+.hp-cta-inner { max-width:700px; margin:0 auto; background:linear-gradient(135deg,var(--purple) 0%,#4c1d95 100%); border-radius:28px; padding:clamp(3rem,6vw,5rem) clamp(2rem,5vw,4rem); position:relative; overflow:hidden; box-shadow:0 30px 80px rgba(124,58,237,0.35); }
+.hp-cta-inner::before { content:''; position:absolute; top:-50px; right:-50px; width:280px; height:280px; border-radius:50%; background:rgba(255,255,255,0.05); pointer-events:none; }
+.hp-cta h2 { font-family:'Bricolage Grotesque',sans-serif; font-size:clamp(1.8rem,4vw,2.8rem); font-weight:800; letter-spacing:-0.02em; color:#fff; margin-bottom:14px; }
+.hp-cta p { color:rgba(255,255,255,0.65); font-size:15px; font-weight:300; line-height:1.65; margin-bottom:2.5rem; max-width:420px; margin-left:auto; margin-right:auto; }
+.hp-btn-white { display:inline-flex; align-items:center; gap:8px; background:#fff; color:var(--purple); font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; padding:14px 32px; border-radius:50px; text-decoration:none; border:none; cursor:pointer; box-shadow:0 8px 30px rgba(0,0,0,0.15); transition:all 0.2s; }
+.hp-btn-white:hover { transform:translateY(-2px); box-shadow:0 12px 40px rgba(0,0,0,0.2); }
 
-  /* ── FEATURES ── */
-  .hp-features {
-    padding: clamp(5rem, 10vw, 9rem) clamp(1.5rem, 6vw, 6rem);
-    position: relative;
-  }
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
 
-  .hp-section-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 1rem;
-  }
-
-  .hp-section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2rem, 4vw, 3.2rem);
-    font-weight: 700;
-    line-height: 1.15;
-    margin: 0 0 1rem;
-    max-width: 480px;
-  }
-
-  .hp-features-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    margin-top: 4rem;
-  }
-
-  @media (max-width: 768px) {
-    .hp-features-layout { grid-template-columns: 1fr; }
-  }
-
-  .hp-feature-card {
-    background: var(--bg-card);
-    padding: 2.5rem 2rem;
-    transition: background 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hp-feature-card::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--accent);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-    transform-origin: left;
-  }
-
-  .hp-feature-card:hover { background: var(--bg-card-hover); }
-  .hp-feature-card:hover::after { transform: scaleX(1); }
-
-  .hp-feature-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background: var(--accent-dim);
-    border: 1px solid rgba(245,158,11,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-    color: var(--accent);
-  }
-
-  .hp-feature-title {
-    font-size: 17px;
-    font-weight: 600;
-    margin: 0 0 0.75rem;
-    color: var(--text-primary);
-  }
-
-  .hp-feature-desc {
-    font-size: 14px;
-    line-height: 1.65;
-    color: var(--text-muted);
-    font-weight: 300;
-    margin: 0;
-  }
-
-  /* ── EVENTS ── */
-  .hp-events {
-    padding: clamp(5rem, 10vw, 9rem) clamp(1.5rem, 6vw, 6rem);
-    background: var(--bg-card);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .hp-events-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 3rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .hp-link-arrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--accent);
-    text-decoration: none;
-    transition: gap 0.2s;
-  }
-  .hp-link-arrow:hover { gap: 10px; }
-
-  .hp-events-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-
-  @media (max-width: 900px) {
-    .hp-events-grid { grid-template-columns: 1fr 1fr; }
-  }
-
-  @media (max-width: 600px) {
-    .hp-events-grid { grid-template-columns: 1fr; }
-  }
-
-  .hp-event-card {
-    background: var(--bg-dark);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    text-decoration: none;
-    display: block;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-
-  .hp-event-card:hover {
-    border-color: var(--border-hover);
-    transform: translateY(-3px);
-  }
-
-  .hp-event-img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    display: block;
-    filter: saturate(0.7);
-    transition: filter 0.3s;
-  }
-
-  .hp-event-card:hover .hp-event-img { filter: saturate(1); }
-
-  .hp-event-body { padding: 1.25rem; }
-
-  .hp-event-category {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 0.5rem;
-  }
-
-  .hp-event-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 0.5rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: color 0.2s;
-  }
-
-  .hp-event-card:hover .hp-event-title { color: var(--accent-light); }
-
-  .hp-event-desc {
-    font-size: 13px;
-    color: var(--text-muted);
-    font-weight: 300;
-    line-height: 1.5;
-    margin: 0 0 1rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .hp-event-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border);
-    font-size: 12px;
-    color: var(--text-dim);
-  }
-
-  .hp-event-meta-left {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .hp-price-badge {
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--accent-dim);
-    color: var(--accent-light);
-    padding: 3px 10px;
-    border-radius: 20px;
-  }
-
-  /* ── CTA ── */
-  .hp-cta {
-    padding: clamp(6rem, 12vw, 11rem) clamp(1.5rem, 6vw, 6rem);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hp-cta-bg {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(245,158,11,0.06) 0%, transparent 70%);
-  }
-
-  .hp-cta-border {
-    max-width: 680px;
-    margin: 0 auto;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: clamp(3rem, 6vw, 5rem) clamp(2rem, 5vw, 4rem);
-    position: relative;
-    z-index: 2;
-    background: var(--bg-card);
-  }
-
-  .hp-cta h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 700;
-    margin: 0 0 1rem;
-    line-height: 1.15;
-  }
-
-  .hp-cta p {
-    color: var(--text-muted);
-    font-size: 16px;
-    font-weight: 300;
-    margin: 0 0 2.5rem;
-    line-height: 1.65;
-  }
-
-  /* Animations */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+@media(max-width:768px) {
+  .hp-hero{flex-direction:column;padding:100px 24px 60px;}
+  .hp-hero-right{margin-top:40px;}
+  .hp-hero-img-wrap{width:300px;height:340px;}
+  .hp-stats-inner{grid-template-columns:1fr 1fr;gap:24px;padding:24px;}
+  .hp-stat-divider{display:none;}
+  .hp-nav{padding:14px 20px;}
+  .hp-nav-links{display:none;}
+  .hp-features,.hp-events,.hp-cta,.hp-stats{padding-left:20px;padding-right:20px;}
+  .hp-features-grid,.hp-events-grid{grid-template-columns:1fr;}
+  .hp-download{padding:24px;flex-direction:column;}
+}
 `;
+
+const features = [
+  { icon: <Calendar size={22}/>, title: 'Smart Event Discovery', desc: 'Find workshops, seminars and parties near you. Filter by date, category, or club — RSVP in seconds.' },
+  { icon: <Users size={22}/>, title: 'Club Management', desc: 'Run your student organization smoothly. Members, announcements, and events in one clean dashboard.' },
+  { icon: <Star size={22}/>, title: 'Earn Recognition', desc: 'Track participation, earn certificates, and build a leadership portfolio that opens doors.' },
+  { icon: <Zap size={22}/>, title: 'AI Recommendations', desc: 'Get personalised activity suggestions based on your interests, schedule, and campus activity.' },
+  { icon: <Clock size={22}/>, title: 'Real-Time Updates', desc: 'Live attendance tracking, last-minute event changes, and instant notifications to stay in the loop.' },
+  { icon: <TrendingUp size={22}/>, title: 'Analytics for Orgs', desc: 'Club admins get deep insights into member engagement, event performance, and growth trends.' },
+];
+
+const stats = [
+  { pct: '95%', desc: 'Student satisfaction with UniActs event discovery' },
+  { pct: '78%', desc: 'Increase in club membership after joining' },
+  { pct: '89%', desc: 'Savings in admin time for club organisers' },
+];
 
 export function HomePage() {
   const [events, setEvents] = useState([]);
@@ -482,137 +194,140 @@ export function HomePage() {
   const featuredEvents = events.slice(0, 3);
 
   return (
-    <div className="hp-root">
-      <style>{styles}</style>
+    <div className="hp">
+      <style>{css}</style>
 
-      {/* ── Hero ── */}
+      <HomeNavigation />
+
+      {/* HERO */}
       <section className="hp-hero">
-        <div className="hp-hero-bg" />
-        <div className="hp-hero-grid" />
+        <div className="hp-bg-text">UNIACTS</div>
 
-        <div className="hp-hero-content">
-          <div className="hp-eyebrow">
-            <Zap size={11} />
-            University Life, Reimagined
-          </div>
-
-          <h1>
-            Your campus.<br />
-            Your <em>community.</em>
+        <div className="hp-hero-left">
+          <div className="hp-eyebrow"><Zap size={11}/> AI-Powered Campus Platform</div>
+          <h1 className="hp-hero-title">
+            Discover Your{' '}
+            <span className="pill-word">
+              <span className="pill-icon">🎓</span>
+              Campus
+            </span>{' '}
+            Life With UniActs
           </h1>
-
-          <p className="hp-hero-sub">
-            Discover events, lead clubs, and connect with thousands of students
-            who share your interests — all in one place.
-          </p>
-
-          <div className="hp-hero-actions">
-            <Link to="/events" className="hp-btn-primary">
-              Browse Events <ChevronRight size={16} />
-            </Link>
-            <Link to="/register" className="hp-btn-ghost">
-              Join a Club
-            </Link>
+          <p className="hp-hero-sub">Join thousands of students connecting through events, clubs, and shared passions. Your university, fully unlocked — available 24/7.</p>
+          <div className="hp-hero-btns">
+            <Link to="/events" className="hp-btn-purple">Browse Events <ChevronRight size={16}/></Link>
+            <Link to="/register" className="hp-btn-ghost"><Play size={14}/> Join a Club</Link>
           </div>
         </div>
 
-        <div className="hp-hero-stats">
-          {[
-            { value: '12K+', label: 'Active Students' },
-            { value: '340',  label: 'Events this month' },
-            { value: '80+',  label: 'Student Clubs' },
-          ].map(s => (
-            <div key={s.label}>
-              <div className="hp-stat-value">{s.value}</div>
-              <div className="hp-stat-label">{s.label}</div>
+        <div className="hp-hero-right">
+          <div className="hp-hero-img-wrap">
+            <div className="hp-hero-img-placeholder">🎓</div>
+            <div className="hp-badge-float hp-badge-float-1">
+              <div className="hp-badge-icon purple"><Clock size={18}/></div>
+              <div><div className="hp-badge-value">24/7</div><div className="hp-badge-label">Always available</div></div>
             </div>
-          ))}
+            <div className="hp-badge-float hp-badge-float-2">
+              <div className="hp-badge-icon green"><Users size={18}/></div>
+              <div><div className="hp-badge-value">12,400+</div><div className="hp-badge-label">Active students</div></div>
+            </div>
+            <div className="hp-badge-float hp-badge-float-3">
+              <div className="hp-badge-icon blue"><Star size={18}/></div>
+              <div><div className="hp-badge-value">340 events</div><div className="hp-badge-label">This month</div></div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── Features ── */}
+      {/* STATS */}
+      <section className="hp-stats">
+        <div className="hp-stats-inner">
+          {stats.map((s, i) => (
+            <React.Fragment key={s.pct}>
+              <div className="hp-stat-item">
+                <div className="hp-stat-pct">{s.pct}</div>
+                <div className="hp-stat-desc">{s.desc}</div>
+              </div>
+              {i < stats.length - 1 && <div className="hp-stat-divider"/>}
+            </React.Fragment>
+          ))}
+          <div className="hp-stat-cta">
+            <div className="hp-stat-cta-title">See How UniActs Can Transform Your Campus Life</div>
+            <Link to="/contact" className="hp-btn-purple" style={{fontSize:'13px',padding:'10px 20px',borderRadius:'50px',display:'inline-flex',alignItems:'center',gap:'6px',textDecoration:'none'}}>
+              Speak to a Specialist <ArrowRight size={13}/>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
       <section className="hp-features">
-        <div className="hp-section-label">Why UniActs</div>
-        <h2 className="hp-section-title">
-          Everything your campus needs, in one platform.
-        </h2>
-
-        <div className="hp-features-layout">
-          {[
-            {
-              icon: <Calendar size={20} />,
-              title: 'Easy Event Discovery',
-              desc: 'Find workshops, parties, and seminars near you. Filter by date, category, or club — and RSVP in seconds.',
-            },
-            {
-              icon: <Users size={20} />,
-              title: 'Club Management',
-              desc: 'Run your student organization smoothly. Manage members, post announcements, and schedule events in one dashboard.',
-            },
-            {
-              icon: <Star size={20} />,
-              title: 'Engage & Lead',
-              desc: 'Track your participation, earn certificates, and build a leadership portfolio that stands out.',
-            },
-          ].map(f => (
-            <div key={f.title} className="hp-feature-card">
-              <div className="hp-feature-icon">{f.icon}</div>
-              <h3 className="hp-feature-title">{f.title}</h3>
-              <p className="hp-feature-desc">{f.desc}</p>
+        <div className="hp-features-header">
+          <div className="hp-label"><Zap size={11}/> Features</div>
+          <h2 className="hp-section-title">Automate Your Campus<br/>Simply And Efficiently</h2>
+          <p className="hp-section-sub">Our AI tools are available 24/7 — ready to connect you with events, clubs, and everything your university offers.</p>
+        </div>
+        <div className="hp-features-grid">
+          {features.map(f => (
+            <div key={f.title} className="hp-feat-card">
+              <div className="hp-feat-icon">{f.icon}</div>
+              <div className="hp-feat-title">{f.title}</div>
+              <p className="hp-feat-desc">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Events ── */}
+      {/* EVENTS */}
       <section className="hp-events">
         <div className="hp-events-header">
           <div>
-            <div className="hp-section-label">On the horizon</div>
-            <h2 className="hp-section-title" style={{ margin: 0 }}>Upcoming Events</h2>
+            <div className="hp-label" style={{justifyContent:'flex-start'}}><Calendar size={11}/> Upcoming</div>
+            <h2 className="hp-section-title" style={{fontSize:'clamp(1.5rem,2.5vw,2rem)',marginBottom:0}}>Don't miss what's happening</h2>
           </div>
-          <Link to="/events" className="hp-link-arrow">
-            View all <ArrowRight size={14} />
-          </Link>
+          <Link to="/events" className="hp-view-all">View all <ArrowRight size={13}/></Link>
         </div>
-
         <div className="hp-events-grid">
           {featuredEvents.map(event => (
             <Link key={event.id} to={`/events/${event.id}`} className="hp-event-card">
-              <img src={event.image} alt={event.title} className="hp-event-img" />
+              <div className="hp-event-img-wrap">
+                <img src={event.image} alt={event.title} className="hp-event-img"/>
+                <span className="hp-event-price">{event.price}</span>
+              </div>
               <div className="hp-event-body">
-                <div className="hp-event-category">{event.category}</div>
+                <div className="hp-event-cat">{event.category}</div>
                 <div className="hp-event-title">{event.title}</div>
-                <p className="hp-event-desc">
-                  {event.description || 'Join us for this amazing event!'}
-                </p>
+                <p className="hp-event-desc">{event.description || 'Join us for this amazing event!'}</p>
                 <div className="hp-event-meta">
-                  <div className="hp-event-meta-left">
-                    <Calendar size={12} />
-                    {event.date}
-                  </div>
-                  <span className="hp-price-badge">{event.price}</span>
+                  <span className="hp-event-date"><Calendar size={11}/> {event.date}</span>
+                  <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:120}}>{event.location}</span>
                 </div>
               </div>
             </Link>
           ))}
         </div>
+
+        <div className="hp-download">
+          <div>
+            <div className="hp-download-title">Download our mobile app</div>
+            <div className="hp-download-sub">Available on iOS and Android — free forever.</div>
+          </div>
+          <div className="hp-store-btns">
+            <a href="#" className="hp-store-btn"><span style={{fontSize:22}}>▶</span><div><span>Get it on</span>Google Play</div></a>
+            <a href="#" className="hp-store-btn"><span style={{fontSize:22}}>⌘</span><div><span>Download on</span>App Store</div></a>
+          </div>
+        </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* CTA */}
       <section className="hp-cta">
-        <div className="hp-cta-bg" />
-        <div className="hp-cta-border">
+        <div className="hp-cta-inner">
           <h2>Ready to get involved?</h2>
-          <p>
-            Create an account today to register for events, join clubs,
-            and start building your university story.
-          </p>
-          <Link to="/register" className="hp-btn-primary" style={{ margin: '0 auto' }}>
-            Get Started — it's free <ChevronRight size={16} />
-          </Link>
+          <p>Create an account today to register for events, join clubs, and start your university story.</p>
+          <Link to="/register" className="hp-btn-white">Get Started <ChevronRight size={16}/></Link>
         </div>
       </section>
     </div>
   );
 }
+
