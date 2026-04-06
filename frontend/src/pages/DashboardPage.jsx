@@ -1,252 +1,265 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { 
-  BarChart3, 
-  Users, 
-  Calendar, 
-  TrendingUp, 
-  Plus, 
-  MoreHorizontal,
-  Settings,
-  DoorOpen
-} from 'lucide-react';
 import { Link } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { 
+  Plus, 
+  Settings,
+  Calendar,
+  Users,
+  MapPin,
+  ArrowRight
+} from 'lucide-react';
+
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+.dp {
+  --bg: #f8f7f4;
+  --purple: #7c3aed;
+  --purple-light: #a78bfa;
+  --purple-mid: #6d28d9;
+  --accent-soft: rgba(124,58,237,0.1);
+  --white: #ffffff;
+  --text: #1a0a3c;
+  --muted: #6b7280;
+  --border: #e5e5e5;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* NAVBAR */
+.dp-navbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.dp-logo { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:22px; color:var(--text); text-decoration:none; display:flex; align-items:center; gap:8px; }
+.dp-logo-dot { width:9px; height:9px; border-radius:50%; background:var(--purple); }
+
+.dp-nav-links { display:flex; gap:32px; }
+.dp-nav-link { font-size:15px; font-weight:500; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+.dp-nav-link:hover { color: var(--purple); }
+.dp-nav-link.active { color: var(--purple); }
+
+.dp-nav-actions { display:flex; gap:12px; align-items:center; }
+.dp-btn { display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:500; padding:10px 20px; border-radius:50px; text-decoration:none; cursor:pointer; transition:all 0.2s; }
+.dp-btn-outline { background:transparent; color:var(--text); border:1px solid var(--border); }
+.dp-btn-outline:hover { border-color:var(--purple); color:var(--purple); }
+.dp-btn-purple { background:var(--purple); color:#fff; border:none; }
+.dp-btn-purple:hover { background:var(--purple-mid); }
+.dp-user-avatar { width:36px; height:36px; border-radius:50%; background:var(--purple-light); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; }
+
+/* HERO */
+.dp-hero {
+  padding: 80px 48px;
+  text-align: center;
+  background: linear-gradient(180deg, #f8f7f4 0%, #efeef8 100%);
+}
+.dp-hero-content { max-width:720px; margin: 0 auto; }
+.dp-hero h1 { font-family:'Bricolage Grotesque',sans-serif; font-size:52px; font-weight:800; line-height:1.1; margin-bottom:20px; }
+.dp-hero h1 span { color:var(--purple); }
+.dp-hero p { font-size:18px; color:var(--muted); margin-bottom:36px; line-height:1.6; }
+.dp-hero-buttons { display:flex; gap:16px; justify-content:center; }
+.dp-hero .dp-btn { padding:14px 28px; font-size:15px; }
+.dp-hero .dp-btn-outline { background:var(--white); }
+
+/* SECTIONS */
+.dp-section { padding: 64px 48px; }
+.dp-section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; }
+.dp-section-title { font-family:'Bricolage Grotesque',sans-serif; font-size:28px; font-weight:700; }
+.dp-section-link { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--purple); text-decoration:none; }
+.dp-section-link:hover { gap:10px; }
+
+/* CARDS GRID */
+.dp-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:24px; }
+
+.dp-card {
+  background:var(--white); border-radius:20px; padding:28px;
+  border: 1px solid var(--border);
+  text-decoration:none; color:inherit;
+  transition:all 0.25s; display:block;
+}
+.dp-card:hover { border-color:var(--purple-light); transform:translateY(-4px); box-shadow:0 12px 32px rgba(124,58,237,0.12); }
+
+.dp-card-icon { width:48px; height:48px; border-radius:14px; background:var(--accent-soft); color:var(--purple); display:flex; align-items:center; justify-content:center; margin-bottom:20px; }
+.dp-card h3 { font-family:'Bricolage Grotesque',sans-serif; font-size:18px; font-weight:700; margin-bottom:8px; }
+.dp-card p { font-size:14px; color:var(--muted); line-height:1.5; }
+.dp-card-meta { display:flex; gap:16px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); font-size:13px; color:var(--muted); }
+.dp-card-meta span { display:flex; align-items:center; gap:6px; }
+
+/* EMPTY STATE */
+.dp-empty { text-align:center; padding:64px 24px; color:var(--muted); font-size:15px; }
+
+/* LOADING */
+.dp-loading { text-align:center; padding:48px; color:var(--muted); }
+
+/* FOOTER */
+.dp-footer {
+  padding: 32px 48px;
+  border-top: 1px solid var(--border);
+  text-align:center;
+  font-size:14px; color:var(--muted);
+}
+`;
 
 const API_BASE = "http://127.0.0.1:8000/api";
 
-const STATUS_COLORS = {
-  pending:  'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-};
-
 export function DashboardPage() {
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const isProfessor = user?.role === 'professor';
-
-  // Mock data for non-professor stats
-  const stats = [
-    { title: "Total Events", value: "12", icon: Calendar, trend: "+2 this month" },
-    { title: "Total Attendees", value: "1,240", icon: Users, trend: "+12% vs last month" },
-    { title: "Revenue", value: "$340", icon: TrendingUp, trend: "+5% vs last month" },
-    { title: "Avg. Rating", value: "4.8", icon: BarChart3, trend: "Based on 45 reviews" },
-  ];
-
-  const upcomingEvents = [
-    { id: 1, title: "Tech Symposium", date: "Mar 15, 2024", registered: 45, status: "Published" },
-    { id: 2, title: "Coding Workshop", date: "Mar 20, 2024", registered: 12, status: "Draft" },
-    { id: 3, title: "Networking Night", date: "Mar 25, 2024", registered: 89, status: "Published" },
-  ];
-
-  // Room reservations for professor
-  const [reservations, setReservations] = useState([]);
-  const [loadingRes, setLoadingRes] = useState(false);
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  });
+  
+  const [events, setEvents] = useState([]);
+  const [clubs, setClubs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isProfessor || !user?.username) return;
-    setLoadingRes(true);
-    fetch(`${API_BASE}/reservations/?requester=${encodeURIComponent(user.username)}`)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) setReservations(data);
+    setLoading(true);
+    Promise.all([
+      fetch(`${API_BASE}/events/`).then(r => r.json()).catch(() => []),
+      fetch(`${API_BASE}/clubs/`).then(r => r.json()).catch(() => []),
+    ])
+      .then(([eventsData, clubsData]) => {
+        const safe = (d) => Array.isArray(d) ? d : [];
+        setEvents(safe(eventsData).slice(0, 6));
+        setClubs(safe(clubsData).slice(0, 6));
       })
-      .catch(() => {})
-      .finally(() => setLoadingRes(false));
-  }, [isProfessor, user?.username]);
+      .finally(() => setLoading(false));
+  }, []);
+
+  const role = user?.role || 'student';
+  const isAdmin = role === 'admin';
+  const isProfessor = role === 'professor';
+  const isClubPresident = role === 'club_president';
+
+  const getWelcomeMessage = () => {
+    if (isAdmin) return 'Manage system settings and view analytics for all activities.';
+    if (isProfessor) return `Welcome back, ${user?.first_name || user?.username || 'Professor'}. Manage your room reservations and faculty activities.`;
+    if (isClubPresident) return `Welcome back, ${user?.first_name || user?.username || 'President'}. Manage your clubs and organize events.`;
+    return `Welcome back, ${user?.first_name || user?.username || 'Student'}. Discover events and connect with campus clubs.`;
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            {isProfessor
-              ? `Welcome, ${user?.first_name || user?.username}. Manage your room reservations.`
-              : 'Manage your events and view performance.'}
-          </p>
+    <div className="dp">
+      <style>{css}</style>
+      
+      {/* NAVBAR */}
+      <nav className="dp-navbar">
+        <Link to="/" className="dp-logo">
+          <span className="dp-logo-dot"/> UniActs
+        </Link>
+        
+        <div className="dp-nav-links">
+          <Link to="/" className="dp-nav-link active">Home</Link>
+          <Link to="/events" className="dp-nav-link">Events</Link>
+          <Link to="/clubs" className="dp-nav-link">Clubs</Link>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link to="/settings"><Settings className="mr-2 h-4 w-4"/> Settings</Link>
-          </Button>
-          {!isProfessor && (
-            <Button asChild>
-              <Link to="/create-event"><Plus className="mr-2 h-4 w-4"/> Create Event</Link>
-            </Button>
+        
+        <div className="dp-nav-actions">
+          <Link to="/settings" className="dp-btn dp-btn-outline">
+            <Settings size={16}/> Settings
+          </Link>
+          {(isClubPresident || isAdmin) && (
+            <Link to="/create-event" className="dp-btn dp-btn-purple">
+              <Plus size={16}/> New Event
+            </Link>
+          )}
+          {user && (
+            <div className="dp-user-avatar">
+              {(user.first_name || user.username)?.[0]?.toUpperCase()}
+            </div>
           )}
         </div>
-      </div>
+      </nav>
 
-      {/* Professor: Room Reservations */}
-      {isProfessor ? (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DoorOpen className="h-5 w-5" /> My Room Reservations
-              </CardTitle>
-              <CardDescription>
-                All room booking requests you have submitted and their current status.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingRes ? (
-                <div className="flex items-center justify-center h-32 text-muted-foreground">Loading…</div>
-              ) : reservations.length === 0 ? (
-                <div className="flex items-center justify-center h-32 text-muted-foreground">
-                  No room reservations found.
-                </div>
-              ) : (
-                <div className="relative w-full overflow-auto">
-                  <table className="w-full caption-bottom text-sm text-left">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Room</th>
-                        <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Date</th>
-                        <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Time Slot</th>
-                        <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Requested On</th>
-                        <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="[&_tr:last-child]:border-0">
-                      {reservations.map((res) => (
-                        <tr key={res.id} className="border-b transition-colors hover:bg-muted/50">
-                          <td className="p-4 align-middle font-medium">{res.room_name}</td>
-                          <td className="p-4 align-middle">{res.date}</td>
-                          <td className="p-4 align-middle">{res.time_slot}</td>
-                          <td className="p-4 align-middle text-muted-foreground">{res.created_at}</td>
-                          <td className="p-4 align-middle">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[res.status] || 'bg-gray-100 text-gray-800'}`}>
-                              {res.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* HERO SECTION */}
+      <section className="dp-hero">
+        <div className="dp-hero-content">
+          <h1>Welcome to <span>UniActs</span></h1>
+          <p>{getWelcomeMessage()}</p>
+          <div className="dp-hero-buttons">
+            <Link to="/events" className="dp-btn dp-btn-purple">
+              <Calendar size={16}/> Browse Events
+            </Link>
+            <Link to="/clubs" className="dp-btn dp-btn-outline">
+              <Users size={16}/> Explore Clubs
+            </Link>
+          </div>
         </div>
-      ) : (
-        <>
-          {/* Stats Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-            {stats.map((stat, index) => (
-              <Card key={index}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stat.trend}
-                  </p>
-                </CardContent>
-              </Card>
+      </section>
+
+      {/* EVENTS LIST SECTION */}
+      <section className="dp-section">
+        <div className="dp-section-header">
+          <h2 className="dp-section-title">Upcoming Events</h2>
+          <Link to="/events" className="dp-section-link">
+            View all <ArrowRight size={16}/>
+          </Link>
+        </div>
+        
+        {loading ? (
+          <div className="dp-loading">Loading events...</div>
+        ) : events.length === 0 ? (
+          <div className="dp-empty">No upcoming events found</div>
+        ) : (
+          <div className="dp-cards">
+            {events.map(ev => (
+              <Link to={`/events/${ev.id}`} key={ev.id} className="dp-card">
+                <div className="dp-card-icon"><Calendar size={22}/></div>
+                <h3>{ev.title}</h3>
+                <p>{ev.description?.substring(0, 100)}...</p>
+                <div className="dp-card-meta">
+                  <span><Calendar size={14}/> {ev.date}</span>
+                  <span><MapPin size={14}/> {ev.location || 'TBA'}</span>
+                </div>
+              </Link>
             ))}
           </div>
+        )}
+      </section>
 
-          {/* Main Content Tabs */}
-          <Tabs defaultValue="events" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="events">My Events</TabsTrigger>
-              <TabsTrigger value="attendees">Attendees</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="events" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Events</CardTitle>
-                  <CardDescription>
-                    Manage your upcoming and past events here.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="relative w-full overflow-auto">
-                    <table className="w-full caption-bottom text-sm text-left">
-                      <thead className="[&_tr]:border-b">
-                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                          <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Event Name</th>
-                          <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Date</th>
-                          <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Registered</th>
-                          <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Status</th>
-                          <th className="h-12 px-4 align-middle font-medium text-muted-foreground text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="[&_tr:last-child]:border-0">
-                        {upcomingEvents.map((event) => (
-                          <tr key={event.id} className="border-b transition-colors hover:bg-muted/50">
-                            <td className="p-4 align-middle font-medium">{event.title}</td>
-                            <td className="p-4 align-middle">{event.date}</td>
-                            <td className="p-4 align-middle">{event.registered}</td>
-                            <td className="p-4 align-middle">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                event.status === 'Published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {event.status}
-                              </span>
-                            </td>
-                            <td className="p-4 align-middle text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuItem>Edit Event</DropdownMenuItem>
-                                  <DropdownMenuItem>View Attendees</DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600">Cancel Event</DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="attendees">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Registrations</CardTitle>
-                  <CardDescription>
-                    View who's signing up for your events.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center h-48 text-muted-foreground">
-                    No recent registrations found.
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
+      {/* CLUBS LIST SECTION */}
+      <section className="dp-section">
+        <div className="dp-section-header">
+          <h2 className="dp-section-title">Featured Clubs</h2>
+          <Link to="/clubs" className="dp-section-link">
+            View all <ArrowRight size={16}/>
+          </Link>
+        </div>
+        
+        {loading ? (
+          <div className="dp-loading">Loading clubs...</div>
+        ) : clubs.length === 0 ? (
+          <div className="dp-empty">No clubs found</div>
+        ) : (
+          <div className="dp-cards">
+            {clubs.map(club => (
+              <Link to={`/clubs/${club.id}`} key={club.id} className="dp-card">
+                <div className="dp-card-icon"><Users size={22}/></div>
+                <h3>{club.name}</h3>
+                <p>{club.description?.substring(0, 100)}...</p>
+                <div className="dp-card-meta">
+                  <span><Users size={14}/> {club.members_count || 0} members</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* FOOTER */}
+      <footer className="dp-footer">
+        <p>© 2024 UniActs. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
